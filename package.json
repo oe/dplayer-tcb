@@ -11,11 +11,19 @@
     "dev": "parcel test/index.html",
     "build": "rm -rf dist && parcel build src/index.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "tcb-js-sdk": "^1.10.6"
+  },
   "devDependencies": {
     "@babel/core": "^7.10.5",
     "@babel/preset-env": "^7.10.4",
+    "@cloudbase/cli": "^0.9.1",
+    "@types/dplayer": "^1.25.0",
+    "dplayer": "^1.26.0",
     "parcel-bundler": "^1.12.4",
     "typescript": "^3.9.7"
+  },
+  "peerDependencies": {
+    "dplayer": "^1.26.0"
   }
 }
