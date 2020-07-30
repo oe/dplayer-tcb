@@ -7,7 +7,7 @@ module.exports = {
         inputs: {
           collections: [
             {
-              collectionName: 'tcb_danmaku',
+              collectionName: 'tcb_player_danmaku',
               aclTag: 'READONLY'
             }
           ]
