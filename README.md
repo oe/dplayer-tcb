@@ -1,6 +1,6 @@
-# empty-project
+# DPlayer for TCB
 
-Empty project.
+DPlayer, danmu backend with Tencent cloudbase
 
 ## Building and running on localhost
 
