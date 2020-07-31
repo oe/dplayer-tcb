@@ -48,7 +48,7 @@ function parseDanmaQuery(url: string) {
   return query?.split('&').reduce((acc, cur) => {
     const parts = cur.split('=')
     const key = decodeURIComponent(parts[0])
-    acc[decodeURIComponent(parts[0])] = decodeURIComponent(parts[0] || '')
+    acc[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || '')
     if (key === 'max') {
       acc.max = parseInt(acc.max, 10)
     }
@@ -79,11 +79,9 @@ async function readDanmaku(envId: string, options: IReadDanmakuOptions) {
     }
     await tcbSign(envId)
     const db = app!.database()
-    const query = db.collection(DB_NAME).where({
+    const result = await db.collection(DB_NAME).where({
       player: queryCond.id
-    })
-    if (queryCond.max) query.limit(queryCond.max)
-    const result = await query.get()
+    }).limit(queryCond.max || 1000).get()
     let dammakus = result.data || []
     dammakus.forEach((item: any) => {
       item.time = item.time || 0
@@ -111,8 +109,10 @@ async function sendDanmaku(envId: string, options: ISendDanmakuOptions) {
   try {
     await tcbSign(envId)
     const db = app!.database()
-    // @ts-ignore
-    options.data.date = +new Date()
+    const data = options.data
+    data.date = +new Date()
+    data.player = data.id
+    delete data.id
     const result = await db.collection(DB_NAME).add(options.data)
     options.success && options.success({code: 0, data: result})
   } catch (error) {
@@ -131,4 +131,5 @@ export default function TcbPlayer(options: ITcbPlayerOptions) {
       send: (param: ISendDanmakuOptions) => sendDanmaku(options.envId, param)
     }
   }
+  return new DPlayer(Object.assign({}, options, config))
 }
