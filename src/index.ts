@@ -109,7 +109,7 @@ async function sendDanmaku(envId: string, options: ISendDanmakuOptions) {
   try {
     await tcbSign(envId)
     const db = app!.database()
-    const data = options.data
+    const data: any = options.data
     data.date = +new Date()
     data.player = data.id
     delete data.id
