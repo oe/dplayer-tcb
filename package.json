@@ -8,7 +8,7 @@
   "license": "ISC",
   "scripts": {
     "clean": "rm dist/bundle.js",
-    "dev": "parcel test/index.html --port 8080 --no-source-maps",
+    "dev": "rm -rf dist && parcel test/index.html --port 8080 --no-source-maps",
     "build-demo": "rm -rf dist && parcel build test/index.html --no-source-maps --public-url ./",
     "build-lib": "rm -rf dist && parcel build src/index.ts --no-source-maps",
     "deploy-demo": "tcb framework:deploy"
