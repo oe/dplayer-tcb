@@ -21,7 +21,9 @@
     "@babel/preset-env": "^7.10.4",
     "@cloudbase/cli": "^0.9.1",
     "@types/dplayer": "^1.25.0",
+    "@types/hls.js": "^0.13.0",
     "dplayer": "^1.26.0",
+    "hls.js": "^0.14.7",
     "parcel-bundler": "^1.12.4",
     "typescript": "^3.9.7"
   },

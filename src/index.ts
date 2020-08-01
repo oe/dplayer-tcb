@@ -22,6 +22,11 @@ interface ITcbPlayerOptions extends Exclude<DPlayerOptions, 'danmaku' | 'apiBack
   envId: string
 }
 
+interface ITpOptions {
+  live?: boolean
+  dp?: DPlayer
+}
+
 const DB_NAME = 'tcb_player_danmaku'
 
 let auth: Auth | undefined
@@ -71,33 +76,86 @@ interface IReadDanmakuOptions {
   success?: Function
   error?: Function
 }
-async function readDanmaku(envId: string, options: IReadDanmakuOptions) {
+
+const READ_PER_PAGE = 1000
+
+async function readDanmaku(envId: string, options: IReadDanmakuOptions, tpOptions: ITpOptions) {
+  if (!options.success) return
   try {
     const queryCond = parseDanmaQuery(options.url)
     if (!queryCond || !queryCond.id) {
       throw new Error('danmaku id is required')
     }
     await tcbSign(envId)
-    const db = app!.database()
-    const result = await db.collection(DB_NAME).where({
-      player: queryCond.id
-    }).limit(queryCond.max || 1000).get()
-    let dammakus = result.data || []
-    dammakus.forEach((item: any) => {
-      item.time = item.time || 0
-      item.type = item.type || 0
-      item.color = item.color || 16777215
-      item.author = htmlEncode(item.author) || 'DPlayer'
-      item.text = htmlEncode(item.text) || ''
-    })
-    options.success && options.success(dammakus)
-    console.log('xx')
+    const collection = app!.database().collection(DB_NAME)
+    
+    // just watch db if is live video
+    if (tpOptions.live) {
+      options.success([])
+      watchDanmaku(collection, queryCond.id, tpOptions.dp)
+      return
+    }
+    
+    const danmaku = await _getDanmaku(collection, 0, queryCond.id)
+    if (danmaku.length === READ_PER_PAGE) {
+      console.log('there maybe more danmaku to read')
+    }
+    options.success(danmaku)
+    
   } catch (error) {
     console.warn('failed to get danmaku', error)
     options.error && options.error()
   }
 }
 
+let watcher: any
+
+function watchDanmaku(collection: any, playerId: string, dp?: DPlayer) {
+  watcher?.close()
+
+  watcher = collection
+    .where({
+      player: playerId
+    })
+    .orderBy('time', 'asc')
+    .watch({
+      onChange: (snapshot: any) => {
+        console.warn('snapshot', snapshot)
+        if (!snapshot.docChanges || !snapshot.docChanges.length) return
+        normalizeDanmaku(
+          snapshot.docChanges
+            .filter((item: any) => item.dataType === 'add')
+            .map((item: any) => item.doc)
+        ).forEach((item: any) => {
+          dp?.danmaku.draw(item)
+        })
+      },
+      onError: (err: any) => {
+        console.log('watch error', err)
+      }
+    })
+
+}
+
+async function _getDanmaku(collection: any, offset: number, playerId: string) {
+  const result = await collection.where({
+    player: playerId
+  }).orderBy('time', 'asc').skip(offset).limit(READ_PER_PAGE).get()
+  
+  return normalizeDanmaku(result.data)
+}
+
+function normalizeDanmaku(danmaku: any) {
+  if (!danmaku) return []
+  danmaku.forEach((item: any) => {
+    item.time = item.time || 0
+    item.type = item.type || 0
+    item.color = item.color || 16777215
+    item.author = htmlEncode(item.author) || 'DPlayer'
+    item.text = htmlEncode(item.text) || ''
+  })
+  return danmaku
+}
 
 interface ISendDanmakuOptions {
   url: string
@@ -105,7 +163,7 @@ interface ISendDanmakuOptions {
   success?: Function
   error?: Function
 }
-async function sendDanmaku(envId: string, options: ISendDanmakuOptions) {
+async function sendDanmaku(envId: string, options: ISendDanmakuOptions, tpOptions: ITpOptions) {
   try {
     await tcbSign(envId)
     const db = app!.database()
@@ -125,11 +183,14 @@ export default function TcbPlayer(options: ITcbPlayerOptions) {
   if (!options.envId) {
     throw new Error('tcb environment id is required')
   }
+  const tpOptions: ITpOptions = {live: options.live}
   const config = {
     apiBackend: {
-      read: (param: IReadDanmakuOptions) => readDanmaku(options.envId, param),
-      send: (param: ISendDanmakuOptions) => sendDanmaku(options.envId, param)
+      read: (param: IReadDanmakuOptions) => readDanmaku(options.envId, param, tpOptions),
+      send: (param: ISendDanmakuOptions) => sendDanmaku(options.envId, param, tpOptions)
     }
   }
-  return new DPlayer(Object.assign({}, options, config))
+  const dp = new DPlayer(Object.assign({}, options, config))
+  tpOptions.dp = dp
+  return dp
 }
