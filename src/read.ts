@@ -2,7 +2,7 @@
  * read danmaku
  */
 import DPlayer from 'dplayer'
-import { parseQuery, tcbSign, DB_NAME, normalizeDanmaku } from './utils'
+import { parseQuery, tcbSign, DB_NAME, normalizeDanmaku, isDMNotExists } from './utils'
 import { ITpOptions } from './types'
 
 export interface IReadDanmakuOptions {
@@ -59,6 +59,7 @@ function watchDanmaku(collection: any, playerId: string, dp?: DPlayer) {
         normalizeDanmaku(
           snapshot.docChanges
             .filter((item: any) => item.dataType === 'add')
+            .filter(isDMNotExists)
             .map((item: any) => item.doc)
         ).forEach((item: any) => {
           dp?.danmaku.draw(item)

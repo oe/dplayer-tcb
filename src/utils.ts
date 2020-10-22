@@ -77,4 +77,18 @@ export async function tcbSign(envId: string | Function) {
   return { app, auth }
 }
 
-
+const SENT_DANMAKU_IDS: string[] = []
+export function updateSentDMIds (id: string) {
+  if (SENT_DANMAKU_IDS.includes(id)) return
+  SENT_DANMAKU_IDS.push(id)
+}
+// filter danmaku that sent by self
+export function isDMNotExists (ds: any, dtIdx: number) {
+  const id = ds.docId
+  const idx = SENT_DANMAKU_IDS.indexOf(id)
+  if (idx !== -1) {
+    SENT_DANMAKU_IDS.splice(idx, 1)
+    return false
+  }
+  return true
+}

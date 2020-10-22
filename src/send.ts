@@ -1,7 +1,7 @@
 /**
  * send danmaku
  */
-import { tcbSign, DB_NAME } from './utils'
+import { tcbSign, DB_NAME, updateSentDMIds } from './utils'
 import { ITpOptions } from './types'
 
 export interface ISendDanmakuOptions {
@@ -20,6 +20,10 @@ export default async function sendDanmaku(envId: string | Function, options: ISe
     data.player = data.id
     delete data.id
     const result = await db.collection(DB_NAME).add(options.data)
+    // @ts-ignore
+    if (tpOptions.dp?.options.live) {
+      updateSentDMIds(result.id)
+    }
     options.success && options.success({code: 0, data: result})
   } catch (error) {
     console.warn('failed to send danmaku', error)

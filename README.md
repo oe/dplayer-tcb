@@ -1,6 +1,6 @@
 # DPlayer for TCB
 
-DPlayer, danmu backend with Tencent cloudbase
+DPlayer, danmaku backend with Tencent cloudbase
 
 ## Building and running on localhost
 
